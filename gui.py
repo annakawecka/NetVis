@@ -3,6 +3,8 @@ from tkinter.ttk import Frame, Button, Label, Style, Combobox
 
 import matplotlib.pyplot as plt
 
+import json
+
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 
@@ -12,6 +14,9 @@ class MainWindow(tk.Tk):
 
     fig = plt.figure(figsize=(5, 5))
     ax = None
+    container = None
+    chosen_dataset = 0      
+    params = []             # list of dictionaries
 
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -23,9 +28,16 @@ class MainWindow(tk.Tk):
 
         self.ax = self.fig.add_subplot(111, projection='3d') # has to be done after canvas.draw(), otherwise it's not 3d
         self.ax.set_axis_off()
+        self.init_params(r'params.json')
 
     def get_ax(self):
         return self.ax
+
+    def init_params(self, file):
+        with open(file, 'r') as f:
+            lines = json.loads(f.read())
+        
+        self.params = lines
 
 
     class MainFrame(Frame):
@@ -49,6 +61,11 @@ class MainWindow(tk.Tk):
             left_frame = self.LeftFrame(outer_instance = self, fig = fig)
             left_frame.grid(row=0, column=0)
 
+        def get_right_frame(self):
+            return self.right_frame
+
+        def get_left_frame(self):
+            return self.left_frame
 
         class RightFrame(Frame):
 
@@ -70,8 +87,15 @@ class MainWindow(tk.Tk):
                 
                 self.init_values_combobox(r'datasets.txt')
 
+                # self.combobox.bind("<<ComboboxSelected>>", lambda _ : print(self.combobox.current()))
+                self.combobox.bind("<<ComboboxSelected>>", self.combobox_callback)
+
                 self.button_select = Button(self, text = "Select", command = self.outer_instance.outer_instance.on_select_click)
                 self.button_select.grid(column=1, row=0)
+
+            def combobox_callback(self, event = None):
+                self.outer_instance.outer_instance.chosen_dataset = self.combobox.current()
+                
 
             def init_values_combobox(self, file):
                 with open(file, 'r') as f:
@@ -80,6 +104,8 @@ class MainWindow(tk.Tk):
                 self.combobox['values'] = lines
                 self.combobox.current(0)
 
+            def get_com_val(self):
+                return self.combobox.get()
 
         class LeftFrame(Frame):
 
@@ -102,5 +128,19 @@ class MainWindow(tk.Tk):
 
         ax = fig.add_subplot(111, projection='3d')
 
-        node_labels = [str(nn+1) for nn in range(30)]
-        data = MultiplexGraph(ax = ax, path=r"C:\Users\kawec\projects\NetVis\Data\Padgett-Florence-Families_Multiplex_Social\Dataset\Padgett-Florentine-Families_multiplex.edges", n_layers=2, directed=True, node_labels=node_labels, path_to_node_labels=r"C:\Users\kawec\projects\NetVis\Data\Padgett-Florence-Families_Multiplex_Social\Dataset\Padgett-Florentine-Families_nodes.txt")
+        dataset = self.params[self.chosen_dataset]
+
+        node_labels = [str(nn+1) for nn in range(300)]
+        data = MultiplexGraph(ax = ax, path=path_not_none(dataset['path']), n_layers=int(dataset['n_layers']), directed= is_true(dataset['directed']), node_labels=node_labels, path_to_node_labels=path_not_none(dataset['path_to_node_labels']), path_to_layer_labels=path_not_none(dataset['path_to_layer_labels']))
+
+def is_true(str: str):
+    if str == 'True':
+        return True
+    else:
+        return False
+
+def path_not_none(path: str):
+    if path == 'None':
+        return None
+    else:
+        return path

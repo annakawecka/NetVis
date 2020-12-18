@@ -8,12 +8,13 @@ from fancy_arrow import myArrow3D
 
 class MultiplexGraph():
 
-    def __init__(self, path: str, n_layers: int, layout = nx.spring_layout, directed = False, ax = None, node_labels = None, path_to_node_labels = None):
+    def __init__(self, path: str, n_layers: int, layout = nx.spring_layout, directed = False, ax = None, node_labels = None, path_to_node_labels = None, path_to_layer_labels = None):
         self.n_layers = n_layers
         self.layout = layout
         self.directed = directed
         self.node_labels = node_labels
         self.path_to_node_labels = path_to_node_labels
+        self.path_to_layer_labels = path_to_layer_labels
 
         if directed:
             self.graphs = [nx.DiGraph() for ii in range(n_layers)]
