@@ -17,7 +17,7 @@ class MainWindow(tk.Tk):
     container = None
     chosen_dataset = 0      
     params = []             # list of dictionaries
-
+    
 
     def __init__(self):
         super(MainWindow, self).__init__()

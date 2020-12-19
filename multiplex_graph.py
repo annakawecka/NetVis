@@ -83,7 +83,8 @@ class MultiplexGraph():
         """Remap edges in the individual layers to the internal representations of the node IDs."""
         self.edges_within_layers = []
         for z, g in enumerate(self.graphs):
-            self.edges_within_layers.extend([((source, z), (target, z)) for source, target in g.edges()])
+            graph = self.graphs[z]
+            self.edges_within_layers.extend([((source, z), (target, z), (graph[source][target])) for source, target in g.edges()])
 
     def get_edges_between_layers(self):
         """Determine edges between layers. Nodes in subsequent layers are
@@ -112,14 +113,16 @@ class MultiplexGraph():
 
     def draw_edges_within_layers(self, edges, *args, **kwargs):
         if self.directed:
-            for source, target in edges:
+            for source, target, weight in edges:
                 x1, y1, z1 = self.node_positions[source]
                 x2, y2, z2 = self.node_positions[target]
-                a = myArrow3D([x1, x2], [y1, y2], [z1, z2], mutation_scale=8, lw=0.1, arrowstyle="simple", **kwargs)
+                width = float(weight["weight"])
+                a = myArrow3D([x1, x2], [y1, y2], [z1, z2], mutation_scale=8, lw=width, arrowstyle="simple", **kwargs)
                 self.ax.add_artist(a)
         else:
-            segments = [(self.node_positions[source], self.node_positions[target]) for source, target in edges]
-            line_collection = Line3DCollection(segments, *args, **kwargs)
+            segments = [(self.node_positions[source], self.node_positions[target]) for source, target, weight in edges]
+            widths = [float(weight["weight"]) for source, target, weight in edges]
+            line_collection = Line3DCollection(segments, linewidths=widths, *args, **kwargs)
             self.ax.add_collection3d(line_collection)
 
     def get_node_label_text(self, path):
@@ -143,8 +146,6 @@ class MultiplexGraph():
     def draw(self):
         self.draw_edges_between_layers(self.edges_between_layers, color='k', alpha=0.3, linestyle='-', linewidth = 0.3, zorder=2)
         self.draw_edges_within_layers(self.edges_within_layers,  color='k', alpha=0.4, linestyle='-', zorder=2)
-
-        print(self.edges_within_layers[1])
 
         for z in range(self.n_layers):
             self.draw_plane(z, alpha=0.2, zorder=1)
