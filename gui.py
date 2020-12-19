@@ -18,6 +18,7 @@ class MainWindow(tk.Tk):
     chosen_dataset = 0      
     params = []             # list of dictionaries
 
+
     def __init__(self):
         super(MainWindow, self).__init__()
         
@@ -29,6 +30,7 @@ class MainWindow(tk.Tk):
         self.ax = self.fig.add_subplot(111, projection='3d') # has to be done after canvas.draw(), otherwise it's not 3d
         self.ax.set_axis_off()
         self.init_params(r'params.json')
+        self.on_select_click()
 
     def get_ax(self):
         return self.ax
@@ -124,6 +126,8 @@ class MainWindow(tk.Tk):
     def on_select_click(self, event = None):
         fig = self.fig
 
+        plt.clf()
+
         self.container = self.MainFrame(outer_instance=self, fig=self.fig)
 
         ax = fig.add_subplot(111, projection='3d')
@@ -131,7 +135,7 @@ class MainWindow(tk.Tk):
         dataset = self.params[self.chosen_dataset]
 
         node_labels = [str(nn+1) for nn in range(300)]
-        data = MultiplexGraph(ax = ax, path=path_not_none(dataset['path']), n_layers=int(dataset['n_layers']), directed= is_true(dataset['directed']), node_labels=node_labels, path_to_node_labels=path_not_none(dataset['path_to_node_labels']), path_to_layer_labels=path_not_none(dataset['path_to_layer_labels']))
+        data = MultiplexGraph(ax = ax, title=dataset['title'], weighted=is_true(dataset['weighted']), path=path_not_none(dataset['path']), n_layers=int(dataset['n_layers']), directed= is_true(dataset['directed']), node_labels=node_labels, path_to_node_labels=path_not_none(dataset['path_to_node_labels']), path_to_layer_labels=path_not_none(dataset['path_to_layer_labels']))
 
 def is_true(str: str):
     if str == 'True':

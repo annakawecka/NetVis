@@ -8,10 +8,12 @@ from fancy_arrow import myArrow3D
 
 class MultiplexGraph():
 
-    def __init__(self, path: str, n_layers: int, layout = nx.spring_layout, directed = False, ax = None, node_labels = None, path_to_node_labels = None, path_to_layer_labels = None):
+    def __init__(self, path: str, n_layers: int, layout = nx.spring_layout, directed = False, ax = None, node_labels = None, path_to_node_labels = None, path_to_layer_labels = None, title = None, weighted = False):
         self.n_layers = n_layers
         self.layout = layout
         self.directed = directed
+        self.weighted = weighted
+        self.title = title
         self.node_labels = node_labels
         self.path_to_node_labels = path_to_node_labels
         self.path_to_layer_labels = path_to_layer_labels
@@ -121,14 +123,17 @@ class MultiplexGraph():
             self.ax.add_collection3d(line_collection)
 
     def get_node_label_text(self, path):
-        self.node_labels_text = []
+        if self.path_to_node_labels is not None:
+            self.node_labels_text = []
 
-        with open(path) as file:
-            lines = file.read().splitlines()
+            with open(path) as file:
+                lines = file.read().splitlines()
 
-        for line in lines[1:]:
-            nodeID, nodeLabel = line.split(sep=' ')
-            self.node_labels_text.append(nodeLabel)
+            for line in lines[1:]:
+                params = line.split(sep=' ')
+                nodeID = params[0]
+                nodeLabel = params[1] 
+                self.node_labels_text.append(nodeLabel)
 
     def draw_node_labels(self, node_labels, text, *args, **kwargs):
         for node, z in self.nodes:
@@ -136,8 +141,10 @@ class MultiplexGraph():
                 self.ax.text(*self.node_positions[(node, z)], text[int(node)-1], *args, **kwargs)
 
     def draw(self):
-        self.draw_edges_between_layers(self.edges_between_layers, color='k', alpha=0.3, linestyle='--', zorder=2)
-        self.draw_edges_within_layers(self.edges_within_layers,  color='k', alpha=0.3, linestyle='-', zorder=2)
+        self.draw_edges_between_layers(self.edges_between_layers, color='k', alpha=0.3, linestyle='-', linewidth = 0.3, zorder=2)
+        self.draw_edges_within_layers(self.edges_within_layers,  color='k', alpha=0.4, linestyle='-', zorder=2)
+
+        print(self.edges_within_layers[1])
 
         for z in range(self.n_layers):
             self.draw_plane(z, alpha=0.2, zorder=1)
@@ -145,3 +152,7 @@ class MultiplexGraph():
 
         # if self.node_labels:
         #     self.draw_node_labels(self.node_labels, self.node_labels_text, horizontalalignment='center', verticalalignment='center', zorder=100)
+
+        if self.title is not None:
+            # Placement 0, 0 would be the bottom left, 1, 1 would be the top right.
+            self.ax.text2D(0.05, 0.95, self.title, transform=self.ax.transAxes)
