@@ -37,6 +37,7 @@ class MultiplexGraph():
         self.get_edges_between_layers()
         self.get_edges_within_layers()
         self.get_node_label_text(path_to_node_labels)
+        self.get_layer_labels(path_to_layer_labels)
         self.draw()
     
     def read_data(self, path):
@@ -98,6 +99,16 @@ class MultiplexGraph():
                     shared_nodes = set(g.nodes()) & set(h.nodes())
                     self.edges_between_layers.extend([((node, z1), (node, z2)) for node in shared_nodes])
 
+    def get_layer_labels(self, path):
+        if path is not None:
+            self.layer_labels = []
+            with open(path) as file:
+                lines = file.read().splitlines()
+            
+            for line in lines[1:]:
+                values = line.split(sep=' ')
+                self.layer_labels.append(values[1])       
+
     def draw_plane(self, z, *args, **kwargs):
         (xmin, xmax), (ymin, ymax) = self.get_extent(pad=0.1)
         u = np.linspace(xmin, xmax, 10)
@@ -126,7 +137,7 @@ class MultiplexGraph():
             self.ax.add_collection3d(line_collection)
 
     def get_node_label_text(self, path):
-        if self.path_to_node_labels is not None:
+        if path is not None:
             self.node_labels_text = []
 
             with open(path) as file:
@@ -143,6 +154,13 @@ class MultiplexGraph():
             if node in node_labels:
                 self.ax.text(*self.node_positions[(node, z)], text[int(node)-1], *args, **kwargs)
 
+    def draw_layer_labels(self, layer_labels, *args, **kwargs):
+        plt.rcParams.update({'font.size': 8})
+        if self.path_to_layer_labels is not None:
+            for ii in range(self.n_layers):
+                self.ax.text(1, 1, float(ii), self.layer_labels[ii], None)
+        plt.rcParams.update({'font.size': 12})
+
     def draw(self):
         self.draw_edges_between_layers(self.edges_between_layers, color='k', alpha=0.3, linestyle='-', linewidth = 0.3, zorder=2)
         self.draw_edges_within_layers(self.edges_within_layers,  color='k', alpha=0.4, linestyle='-', zorder=2)
@@ -151,9 +169,77 @@ class MultiplexGraph():
             self.draw_plane(z, alpha=0.2, zorder=1)
             self.draw_nodes([node for node in self.nodes if node[1]==z], s=10, zorder=3)
 
+        self.draw_layer_labels(self.path_to_layer_labels)
+
         # if self.node_labels:
         #     self.draw_node_labels(self.node_labels, self.node_labels_text, horizontalalignment='center', verticalalignment='center', zorder=100)
 
         if self.title is not None:
             # Placement 0, 0 would be the bottom left, 1, 1 would be the top right.
             self.ax.text2D(0.05, 0.95, self.title, transform=self.ax.transAxes)
+
+    def aggregate(self, idx):
+        """idx - list of incides to be aggregated.
+        Returns edges of aggregated network and dict of positions of nodes ('node': (x, y, z))"""
+        g = [self.graphs[i] for i in idx]
+        aggregated = nx.compose_all(g)
+        edges = []
+        edges.extend([((source), (target), (aggregated[source][target])) for source, target in aggregated.edges()])
+        
+        nodes = aggregated.nodes()
+        agg_node_positions = dict()
+
+        for node in self.node_positions:
+            if node[0] in nodes:
+                if node[0] not in agg_node_positions:
+                    key = (node[0], node[1])
+                    position = self.node_positions[key]
+                    agg_node_positions.update({(node[0]): (position)})
+
+        return edges, nodes, agg_node_positions
+
+    def overlap(self, idx):
+        """idx - list of incides to be aggregated.
+        Returns edges of overlapping network and dict of positions of nodes ('node': (x, y, z))"""
+        g = [self.graphs[i] for i in idx]
+
+        graphs = iter(g)
+        R = next(graphs)
+
+        for H in graphs:
+            edges_R = R.edges()
+            edges_H = H.edges()
+            
+            if self.directed:
+                common_edges = set.intersection(set(edges_R), set(edges_H))
+                common_edges = list(common_edges)
+            else:
+                edges_R = [list(ele) for ele in edges_R]
+                edges_H = [list(ele) for ele in edges_H]
+                common_edges = []
+                for edge in edges_R:
+                    if edge in edges_H:
+                        common_edges.append(tuple(edge))
+                    else:
+                        edge_rev = [edge[1], edge[0]]
+                        if edge_rev in edges_H:
+                            common_edges.append(tuple(edge_rev))
+            
+            R.clear()
+            for edge in common_edges:
+                R.add_edge(*edge)
+
+        proj_node_positions = dict()
+
+        for node in self.node_positions:
+            if node[0] in R.nodes:
+                if node[0] not in proj_node_positions:
+                    key = (node[0], node[1])
+                    position = self.node_positions[key]
+                    proj_node_positions.update({(node[0]): (position)})
+
+        return R.edges, R.nodes, proj_node_positions
+
+def intersection(lst1, lst2): 
+    lst3 = [value for value in lst1 if value in lst2] 
+    return lst3 
