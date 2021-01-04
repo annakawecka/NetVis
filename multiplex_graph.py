@@ -17,6 +17,7 @@ class MultiplexGraph():
         self.node_labels = node_labels
         self.path_to_node_labels = path_to_node_labels
         self.path_to_layer_labels = path_to_layer_labels
+        self.layer_labels = []
 
         if directed:
             self.graphs = [nx.DiGraph() for ii in range(n_layers)]
@@ -67,9 +68,11 @@ class MultiplexGraph():
         for z, g in enumerate(self.graphs): # z - level, g - graph
             self.node_positions.update({(node, z) : (*pos[node], z) for node in g.nodes()})
 
-    def draw_nodes(self, nodes, *args, **kwargs):
+    def draw_nodes(self, nodes, layer, *args, **kwargs):
         x, y, z = zip(*[self.node_positions[node] for node in nodes])
-        self.ax.scatter(x, y, z, *args, **kwargs)
+        graph = self.graphs[layer]
+        sizes = [graph.degree[node[0]]*500/len(self.nodes) for node in nodes]
+        self.ax.scatter(x, y, z, s=sizes, *args, **kwargs)
 
     def get_extent(self, pad=0.1):
         xyz = np.array(list(self.node_positions.values()))
@@ -101,7 +104,6 @@ class MultiplexGraph():
 
     def get_layer_labels(self, path):
         if path is not None:
-            self.layer_labels = []
             with open(path) as file:
                 lines = file.read().splitlines()
             
@@ -128,7 +130,7 @@ class MultiplexGraph():
                 x1, y1, z1 = self.node_positions[source]
                 x2, y2, z2 = self.node_positions[target]
                 width = float(weight["weight"])
-                a = myArrow3D([x1, x2], [y1, y2], [z1, z2], mutation_scale=8, lw=width, arrowstyle="simple", **kwargs)
+                a = myArrow3D([x1, x2], [y1, y2], [z1, z2], mutation_scale=4, linewidth=width, arrowstyle="-|>", **kwargs)
                 self.ax.add_artist(a)
         else:
             segments = [(self.node_positions[source], self.node_positions[target]) for source, target, weight in edges]
@@ -162,12 +164,12 @@ class MultiplexGraph():
         plt.rcParams.update({'font.size': 12})
 
     def draw(self):
-        self.draw_edges_between_layers(self.edges_between_layers, color='k', alpha=0.3, linestyle='-', linewidth = 0.3, zorder=2)
+        self.draw_edges_between_layers(self.edges_between_layers, color='k', alpha=0.3, linestyle='--', linewidth = 0.2, zorder=2)
         self.draw_edges_within_layers(self.edges_within_layers,  color='k', alpha=0.4, linestyle='-', zorder=2)
 
         for z in range(self.n_layers):
             self.draw_plane(z, alpha=0.2, zorder=1)
-            self.draw_nodes([node for node in self.nodes if node[1]==z], s=10, zorder=3)
+            self.draw_nodes([node for node in self.nodes if node[1]==z], layer = z, zorder=3)
 
         self.draw_layer_labels(self.path_to_layer_labels)
 
@@ -181,7 +183,8 @@ class MultiplexGraph():
     def aggregate(self, idx):
         """idx - list of incides to be aggregated.
         Returns edges of aggregated network and dict of positions of nodes ('node': (x, y, z))"""
-        g = [self.graphs[i] for i in idx]
+        g = [self.graphs[i].copy() for i in idx]
+
         aggregated = nx.compose_all(g)
         edges = []
         edges.extend([((source), (target), (aggregated[source][target])) for source, target in aggregated.edges()])
@@ -201,7 +204,7 @@ class MultiplexGraph():
     def overlap(self, idx):
         """idx - list of incides to be aggregated.
         Returns edges of overlapping network and dict of positions of nodes ('node': (x, y, z))"""
-        g = [self.graphs[i] for i in idx]
+        g = [self.graphs[i].copy() for i in idx]
 
         graphs = iter(g)
         R = next(graphs)
@@ -239,6 +242,25 @@ class MultiplexGraph():
                     proj_node_positions.update({(node[0]): (position)})
 
         return R.edges, R.nodes, proj_node_positions
+
+    def get_layer(self, idx):
+        g = self.graphs[idx] 
+        nodes = g.nodes() # [node for node in self.nodes if node[1]==z]
+        edges = g.edges()
+
+        node_positions = dict()
+        node_degrees = dict()
+
+        for node in self.node_positions:
+            if node[0] in nodes:
+                if node[0] not in node_positions:
+                    key = (node[0], node[1])
+                    position = self.node_positions[key]
+                    degree = g.degree(node[0])
+                    node_positions.update({(node[0]): (position)})
+                    node_degrees.update({(node[0]): degree})
+
+        return edges, nodes, node_positions, node_degrees
 
 def intersection(lst1, lst2): 
     lst3 = [value for value in lst1 if value in lst2] 
