@@ -71,7 +71,7 @@ class MultiplexGraph():
     def draw_nodes(self, nodes, layer, *args, **kwargs):
         x, y, z = zip(*[self.node_positions[node] for node in nodes])
         graph = self.graphs[layer]
-        sizes = [graph.degree[node[0]]*500/len(self.nodes) for node in nodes]
+        sizes = [graph.degree[node[0]]*200/len(self.nodes) for node in nodes]
         self.ax.scatter(x, y, z, s=sizes, *args, **kwargs)
 
     def get_extent(self, pad=0.1):
@@ -199,7 +199,7 @@ class MultiplexGraph():
                     position = self.node_positions[key]
                     agg_node_positions.update({(node[0]): (position)})
 
-        return edges, nodes, agg_node_positions
+        return edges, nodes, agg_node_positions, aggregated
 
     def overlap(self, idx):
         """idx - list of incides to be aggregated.
@@ -241,12 +241,14 @@ class MultiplexGraph():
                     position = self.node_positions[key]
                     proj_node_positions.update({(node[0]): (position)})
 
-        return R.edges, R.nodes, proj_node_positions
+        return R.edges, R.nodes, proj_node_positions, R
 
     def get_layer(self, idx):
         g = self.graphs[idx] 
-        nodes = g.nodes() # [node for node in self.nodes if node[1]==z]
-        edges = g.edges()
+        nodes = g.nodes() 
+        edges = []
+
+        edges.extend([((source), (target), (g[source][target])) for source, target in g.edges()])
 
         node_positions = dict()
         node_degrees = dict()
@@ -260,7 +262,7 @@ class MultiplexGraph():
                     node_positions.update({(node[0]): (position)})
                     node_degrees.update({(node[0]): degree})
 
-        return edges, nodes, node_positions, node_degrees
+        return edges, nodes, node_positions, node_degrees, g
 
 def intersection(lst1, lst2): 
     lst3 = [value for value in lst1 if value in lst2] 
