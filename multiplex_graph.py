@@ -187,7 +187,8 @@ class MultiplexGraph():
 
         aggregated = nx.compose_all(g)
         edges = []
-        edges.extend([((source), (target), (aggregated[source][target])) for source, target in aggregated.edges()])
+        # edges.extend([((source), (target), (aggregated[source][target])) for source, target in aggregated.edges()])
+        edges.extend([((source), (target)) for source, target in aggregated.edges()])
         
         nodes = aggregated.nodes()
         agg_node_positions = dict()
