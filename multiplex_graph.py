@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from mpl_toolkits.mplot3d import Axes3D, proj3d
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
+import sys
+import os
 
 from fancy_arrow import myArrow3D
 
@@ -32,13 +34,13 @@ class MultiplexGraph():
         
         self.ax.set_axis_off()
 
-        self.read_data(path)
+        self.read_data(os.getcwd() + path)
         self.get_nodes()
         self.get_node_positions()
         self.get_edges_between_layers()
         self.get_edges_within_layers()
-        self.get_node_label_text(path_to_node_labels)
-        self.get_layer_labels(path_to_layer_labels)
+        self.get_node_label_text(os.getcwd() + path_to_node_labels)
+        self.get_layer_labels(os.getcwd() + path_to_layer_labels)
         self.draw()
     
     def read_data(self, path):
@@ -164,12 +166,16 @@ class MultiplexGraph():
         plt.rcParams.update({'font.size': 12})
 
     def draw(self):
-        self.draw_edges_between_layers(self.edges_between_layers, color='k', alpha=0.3, linestyle='--', linewidth = 0.2, zorder=2)
-        self.draw_edges_within_layers(self.edges_within_layers,  color='k', alpha=0.4, linestyle='-', zorder=2)
-
+        
         for z in range(self.n_layers):
             self.draw_plane(z, alpha=0.2, zorder=1)
-            self.draw_nodes([node for node in self.nodes if node[1]==z], layer = z, zorder=3)
+
+        self.draw_edges_between_layers(self.edges_between_layers, color='k', alpha=0.3, linestyle='--', linewidth = 0.2, zorder=2)
+        self.draw_edges_within_layers(self.edges_within_layers,  color='k', alpha=0.4, linestyle='-', zorder=3)
+
+        for z in range(self.n_layers):
+            self.draw_nodes([node for node in self.nodes if node[1]==z], layer = z, zorder=4)
+
 
         self.draw_layer_labels(self.path_to_layer_labels)
 

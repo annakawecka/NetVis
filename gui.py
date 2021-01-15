@@ -26,7 +26,7 @@ class MainWindow(tk.Tk):
     container = None
     chosen_dataset = 0      
     params = []             # list of dictionaries
-    data = MultiplexGraph(title="Padgett Florence Families Social",  path="C:/Users/kawec/projects/NetVis/Data/Padgett-Florence-Families_Multiplex_Social/Dataset/Padgett-Florentine-Families_multiplex.edges",   n_layers=2,    directed=False,    weighted=False,     path_to_node_labels="C:/Users/kawec/projects/NetVis/Data/Padgett-Florence-Families_Multiplex_Social/Dataset/Padgett-Florentine-Families_nodes.txt", path_to_layer_labels="C:/Users/kawec/projects/NetVis/Data/Padgett-Florence-Families_Multiplex_Social/Dataset/Padgett-Florentine-Families_layers.txt")
+    data = MultiplexGraph(title="Padgett Florence Families Social",  path="/Data/Padgett-Florence-Families_Multiplex_Social/Dataset/Padgett-Florentine-Families_multiplex.edges",   n_layers=2,    directed=False,    weighted=False,     path_to_node_labels="/Data/Padgett-Florence-Families_Multiplex_Social/Dataset/Padgett-Florentine-Families_nodes.txt", path_to_layer_labels="/Data/Padgett-Florence-Families_Multiplex_Social/Dataset/Padgett-Florentine-Families_layers.txt")
     layer_to_inspect = 0
     layers_to_process = []
     layers_to_compute_pearson = []
@@ -330,21 +330,7 @@ class MainWindow(tk.Tk):
         zs = np.array(zs)
         X = np.column_stack((xs, ys, zs))
 
-        x, y, z = zip(*[node_positions[node] for node in nodes])
-        if mode == 'inspect':
-            sizes = [node_degrees[node]*200/len(self.data.nodes) for node in nodes]
-            sc = ax.scatter(x, y, 0.0, s=sizes, picker=True)
-        else:
-            sc = ax.scatter(x, y, 0.0, picker=True)
-
-        annot = ax.annotate("", xy=(0,0), xytext=(10,10),textcoords="offset points",
-                    bbox=dict(boxstyle="round", fc="w"),
-                    arrowprops=dict(arrowstyle="->"))
-
-        annot.set_visible(False)
-
-        cid = fig.canvas.mpl_connect('button_press_event', lambda event: hover(event, ax=ax, sc=sc, fig=fig, annot=annot, names=node_names, points=X))
-
+        
         if mode == 'inspect':
             if self.data.directed:
                 for source, target, weight in edges:
@@ -381,6 +367,21 @@ class MainWindow(tk.Tk):
                 line_collection = Line3DCollection(segments, linewidths=widths, color='k', alpha=0.4, linestyle='-', zorder=2)
                 ax.add_collection3d(line_collection)
         
+        x, y, z = zip(*[node_positions[node] for node in nodes])
+        if mode == 'inspect':
+            sizes = [node_degrees[node]*200/len(self.data.nodes) for node in nodes]
+            sc = ax.scatter(x, y, 0.0, s=sizes, picker=True, zorder=3)
+        else:
+            sc = ax.scatter(x, y, 0.0, s=6, picker=True, zorder=3)
+
+        annot = ax.annotate("", xy=(0,0), xytext=(10,10),textcoords="offset points", zorder=4,
+                    bbox=dict(boxstyle="round", fc="w"),
+                    arrowprops=dict(arrowstyle="->"))
+
+        annot.set_visible(False)
+
+        cid = fig.canvas.mpl_connect('button_press_event', lambda event: hover(event, ax=ax, sc=sc, fig=fig, annot=annot, names=node_names, points=X))
+
         try:
             average_path = nx.average_shortest_path_length(graph)
         except:
