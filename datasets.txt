@@ -1,13 +1,10 @@
 Padgett-Florence-Families_Multiplex_Social
 CElegans_Multiplex_Neuronal
 CS-Aarhus_Multiplex_Social
-EUAir_Multiplex_Transport
 Gallus_Multiplex_Genetic
 HepatitusCVirus_Multiplex_Genetic
 HumanHerpes4_Multiplex_Genetic
 London_Multiplex_Transport
-PierreAuger_Multiplex_Coauthorship
-SacchCere_Multiplex_Genetic
 Vickers-Chan-7thGraders_Multiplex_Social
 Xenopus_Multiplex_Genetic
 Krackhardt-High-Tech_Multiplex_Social

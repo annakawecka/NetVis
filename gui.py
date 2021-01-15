@@ -430,6 +430,8 @@ class MainWindow(tk.Tk):
         nodes2 = g2.nodes
         common_nodes = intersection(nodes1, nodes2)
         N = len(common_nodes)
+        if N == 0:
+            return np.nan
 
         r = 0.0
         mean_deg1 = 0

@@ -39,7 +39,10 @@ class MultiplexGraph():
         self.get_node_positions()
         self.get_edges_between_layers()
         self.get_edges_within_layers()
-        self.get_node_label_text(os.getcwd() + path_to_node_labels)
+        if path_to_node_labels is not None:
+            self.get_node_label_text(os.getcwd() + path_to_node_labels)
+        else:
+            self.get_node_label_text(path_to_node_labels)
         self.get_layer_labels(os.getcwd() + path_to_layer_labels)
         self.draw()
     
@@ -175,7 +178,6 @@ class MultiplexGraph():
 
         for z in range(self.n_layers):
             self.draw_nodes([node for node in self.nodes if node[1]==z], layer = z, zorder=4)
-
 
         self.draw_layer_labels(self.path_to_layer_labels)
 
