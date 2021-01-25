@@ -4,7 +4,6 @@ from tkinter.ttk import Frame, Button, Label, Style, Combobox, Radiobutton, Chec
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
-import mplcursors
 
 from mpl_toolkits.mplot3d import Axes3D, proj3d
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
@@ -15,7 +14,6 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 
 from multiplex_graph import MultiplexGraph, intersection
-from scrollable_frame import ScrollableFrame
 
 from fancy_arrow import myArrow3D
 
@@ -58,16 +56,25 @@ class MainWindow(tk.Tk):
     class MainFrame(Frame):
 
         def __init__(self, outer_instance, fig):
-            super().__init__()
+            super().__init__(master=outer_instance)
             self.outer_instance = outer_instance
             self.initUI(fig=fig)
 
         def initUI(self, fig):
-            self.right_frame = self.RightFrame(outer_instance = self)
-            self.right_frame.grid(row=0, column=1)
+            self.columnconfigure(0, weight=1)
+            self.columnconfigure(1, weight=1)
+            self.rowconfigure(0, weight=1)
 
             self.left_frame = self.LeftFrame(outer_instance = self, fig = fig)
             self.left_frame.grid(row=0, column=0)
+
+            self.right_frame = self.RightFrame(outer_instance = self)
+            self.right_frame.grid(row=0, column=1)
+            # self.right_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+            
+            # self.left_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
 
         def get_right_frame(self):
             return self.right_frame
@@ -81,7 +88,7 @@ class MainWindow(tk.Tk):
         class RightFrame(Frame):
 
             def __init__(self, outer_instance):
-                super().__init__()
+                super().__init__(master=outer_instance.outer_instance)
 
                 self.outer_instance = outer_instance
                 self.radios = []
@@ -148,6 +155,7 @@ class MainWindow(tk.Tk):
                     b = Radiobutton(frame, text=names[t], variable=self.radio_var, value=t, command=self.on_radiobutton_change)
                     self.radios.append(b)
                     b.pack(anchor = tk.W)
+                    # b.grid(column=0, row=t)
 
             def on_radiobutton_change(self, event = None):
                 self.outer_instance.outer_instance.layer_to_inspect = int(self.radio_var.get())
@@ -164,6 +172,7 @@ class MainWindow(tk.Tk):
                     b = Checkbutton(frame, text=names[t], variable=self.checks_val[t], onvalue=1, offvalue=0, command=self.on_checkbox_change)
                     self.checks.append(b)
                     b.pack(anchor = tk.W)
+                    # b.grid(column=0, row=t)
 
             def set_Pearson(self, frame):
                 for widget in self.pearsons:
@@ -177,11 +186,13 @@ class MainWindow(tk.Tk):
                     b = Checkbutton(frame, text=names[t], variable=self.pearsons_val[t], onvalue=1, offvalue=0, command=self.on_pearson_change)
                     self.pearsons.append(b)
                     b.pack(anchor = tk.W)
+                    # b.grid(column=0, row=t)
 
             def set_undirected_Button(self, frame):
                 if self.outer_instance.outer_instance.data.directed:
                     self.undirected_button = Button(frame, text = "Do nieskierowanej", command = self.outer_instance.outer_instance.on_to_undirected_click)
                     self.undirected_button.pack()
+                    # self.undirected_button.grid()
 
             def on_checkbox_change(self, event = None):
                 indices = [ii for ii, val in enumerate(self.checks_val) if val.get() == 1] 
@@ -215,7 +226,7 @@ class MainWindow(tk.Tk):
         class LeftFrame(Frame):
 
             def __init__(self, outer_instance, fig):
-                super().__init__()
+                super().__init__(master=outer_instance.outer_instance)
 
                 self.outer_instance = outer_instance
                 self.initUI(fig)
@@ -287,7 +298,8 @@ class MainWindow(tk.Tk):
         # scroll_frame.pack(anchor = tk.W)
 
         text_field = tk.Text(master=frame, height=10, width=22)
-        text_field.pack(anchor = tk.W)
+        # text_field.pack(anchor = tk.W)
+        text_field.grid()
 
         ax = fig.add_subplot(111, projection='3d')
         ax.set_axis_off()
